@@ -5,17 +5,13 @@ from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
 from brainflow.data_filter import DataFilter, FilterTypes, DetrendOperations
 import time
 
-# ─────────────────────────────────────────────
-# CONFIGURATION
-# ─────────────────────────────────────────────
+
 WINDOW_SIZE  = 128       # 0.5 sec of data
 FS           = 256       # Muse S sample rate
 THRESHOLD    = 0.5       # above this = CLENCH, below = REST
-MODEL_PATH   = "eeg_model.keras"
+MODEL_PATH   = "eeg_model2.keras"
 
-# ─────────────────────────────────────────────
-# FEATURE EXTRACTION — must match training exactly
-# ─────────────────────────────────────────────
+
 def extract_band_powers(window, fs=256):
     features = []
     freqs = np.fft.rfftfreq(window.shape[0], d=1.0/fs)
@@ -33,37 +29,28 @@ def extract_band_powers(window, fs=256):
             features.append(np.log1p(power))
     return np.array(features, dtype=np.float32)
 
-# ─────────────────────────────────────────────
-# LOAD SCALER
-# ─────────────────────────────────────────────
-scaler_mean  = np.load('scaler_mean.npy')
-scaler_scale = np.load('scaler_scale.npy')
+
+scaler_mean  = np.load('scaler_mean2.npy')
+scaler_scale = np.load('scaler_scale2.npy')
 
 def normalize(features):
     return (features - scaler_mean) / scaler_scale
 
-# ─────────────────────────────────────────────
-# LOAD KERAS MODEL (full TF, no TFLite needed on laptop)
-# ─────────────────────────────────────────────
+
 print("Loading model...")
 model = keras.models.load_model(MODEL_PATH)
 print("Model loaded.\n")
 
-# ─────────────────────────────────────────────
-# CONNECT TO MUSE S VIA BLUETOOTH
-# ─────────────────────────────────────────────
+
 BoardShim.enable_dev_board_logger()
 
 params = BrainFlowInputParams()
-# params.mac_address = "Muse-0889"  # uncomment if needed
 
 board        = BoardShim(BoardIds.MUSE_S_BOARD, params)
 eeg_channels = BoardShim.get_eeg_channels(BoardIds.MUSE_S_BOARD)
 print(f"EEG channels: {eeg_channels}")
 
-# ─────────────────────────────────────────────
-# MAIN LOOP
-# ─────────────────────────────────────────────
+
 print("\nConnecting to Muse S... make sure it's powered on and not connected to anything else")
 
 try:
